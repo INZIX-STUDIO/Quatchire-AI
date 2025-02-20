@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quatchire K4.5</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap">
+    <style>
+        body { font-family: 'Noto Sans Arabic', sans-serif; background-color: #0d0d1a; margin: 0; padding: 0; direction: rtl; text-align: right; color: white; }
+        .container { width: 100vw; height: 100vh; display: flex; flex-direction: column; background: #1a1a2e; }
+        .header { background: #5a189a; color: white; text-align: center; padding: 15px; font-size: 22px; font-weight: bold; }
+        .messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; }
+        .message { padding: 12px; margin: 5px; border-radius: 20px; max-width: 75%; opacity: 0; transform: translateY(10px); animation: fadeIn 0.3s ease-in-out forwards; }
+        .user { background: #9d4edd; color: white; align-self: flex-end; }
+        .bot { background: #3c096c; color: white; align-self: flex-start; }
+        .input-container { display: flex; padding: 10px; background: #1a1a2e; border-top: 1px solid #5a189a; align-items: center; }
+        input { flex: 1; padding: 12px; border: none; border-radius: 30px; font-size: 16px; outline: none; background: #3c096c; color: white; margin-right: 10px; }
+        button { background: #9d4edd; color: white; border: none; padding: 12px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">QUATCHIRE K4.5</div>
+        <div class="messages" id="chat"></div>
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Message Quatchire" onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">➤</button>
+        </div>
+    </div><script>
+    const API_KEY = "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";
+    const MODEL = "qwen/qwen2.5-vl-72b-instruct:free";
+    let chatHistory = [
+        { role: "system", content: "Your name is 'Quatchire' and you were developed and trained by INZIX." }
+    ];
+
+    function handleKeyPress(event) {
+        if (event.key === "Enter") sendMessage();
+    }
+
+    async function sendMessage() {
+        let userInput = document.getElementById("userInput").value.trim();
+        if (!userInput) return;
+
+        let chatBox = document.getElementById("chat");
+        chatBox.innerHTML += `<div class="message user">${userInput}</div>`;
+        document.getElementById("userInput").value = "";
+
+        chatHistory.push({ role: "user", content: userInput });
+
+        let response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${API_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+                model: MODEL,
+                messages: chatHistory
+            })
+        });
+
+        let data = await response.json();
+        let botMessage = data.choices?.[0]?.message?.content || "An error occurred! Please check your internet connection.";
+
+        chatBox.innerHTML += `<div class="message bot">${botMessage}</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        chatHistory.push({ role: "assistant", content: botMessage });
+    }
+</script>
+
+</body>
+</html>
